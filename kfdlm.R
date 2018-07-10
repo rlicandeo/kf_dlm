@@ -216,6 +216,73 @@ runFKFdlm = function(rt,st,init_sd_obs_kf=0.2,init_sd_alpha_kf=1.0,init_sd_beta_
              
            },
            
+           
+           "fixVobs" = {
+             
+             start.vals = c(log(init_sd_alpha^2),log(init_sd_beta^2))
+             
+             buildTVP <- function(parm, x.mat){
+               parm <- exp(parm)
+               return( dlmModReg(X=x.mat, dV=init_sd_obs^2, dW=c(parm[1],parm[2])) )
+             }
+             
+             TVP.mle = dlmMLE(y=y, parm=start.vals, x.mat=x, build=buildTVP,
+                              hessian = hess,
+                              # method = "L-BFGS-B", lower=c(log(1e-9),log(1e-9)), upper=c(log(0.6),log(0.6)) )
+                              # method = "BFGS") ## dont work very well with beta_RS (dWbeta goes to zero and dW does the opposite)
+                              method = "Nelder-Mead", control = list(maxit = 10000))
+             
+             sd_estimates <- sqrt(exp((TVP.mle$par)))
+             
+             ## Build fitted ss model, passing to it x as the matrix X in the model
+             TVP.dlm <- buildTVP(TVP.mle$par, x)
+             TVP.f <- dlmFilter(y = y, mod = TVP.dlm)
+             TVP.s <- dlmSmooth(TVP.f)       
+             
+             ## extract smoothed states - intercept and slope coefs
+             alpha.s = TVP.s$s[-1,1,drop=FALSE]
+             beta.s  = TVP.s$s[-1,2,drop=FALSE]
+             colnames(alpha.s) = "alpha"
+             colnames(beta.s)  = "beta"
+             nT = length(alpha.s)
+             
+             if(hess==T) {
+               # extract std errors - dlmSvd2var gives list of MSE matrices
+               mse.list = dlmSvd2var(TVP.s$U.S, TVP.s$D.S)
+               se.mat = t(sapply(mse.list, FUN=function(x) sqrt(diag(x))))
+               se.xts = se.mat[-1, ]
+               colnames(se.xts) = c("alpha", "beta")
+               a.u = alpha.s + 1.96*se.xts[, "alpha"]
+               a.l = alpha.s - 1.96*se.xts[, "alpha"]
+               b.u = beta.s  + 1.96*se.xts[, "beta"]
+               b.l = beta.s  - 1.96*se.xts[, "beta"]
+             } else {
+               se.xts = matrix(0,nT,2)
+               colnames(se.xts) = c("alpha", "beta")
+               a.u = alpha.s
+               a.l = alpha.s
+               b.u = beta.s
+               b.l = beta.s
+             }
+             
+             sd_alpha = sd_estimates[1]
+             sd_beta = sd_estimates[2]
+             sd_obs = init_sd_obs
+             conv_kf = TVP.mle$convergence
+             nloglik = TVP.mle$value
+             npar = length(sd_estimates)
+             aic = npar + 2*nloglik
+             
+             
+           },
+           
+           
+           
+           
+           
+           
+           
+           
            "fitAll" = {
 
              start.vals = c(log(init_sd_obs^2),log(init_sd_alpha^2),log(init_sd_beta^2))

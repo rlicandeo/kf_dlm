@@ -3,10 +3,10 @@ options(max.print=999999)
 library(dlm)
 library(ggplot2, warn.conflicts = FALSE)
 
-dir = "P:/pCloud Sync/MSE_RS_test"
+dir = "P:/pCloud Sync/MSE_RS_test/__kf_dlm"
 setwd(dir)
 data = read.csv("CarlAnchovetaData.csv")
-source('P:/pCloud Sync/MSE_RS_test/kfdlm.R')
+source('P:/pCloud Sync/MSE_RS_test/__kf_dlm/kfdlm.R')
 
 ## run standard ricker 
 # ricker =  runFKFdlm(rt=data$rt,st=data$sbt,
@@ -18,9 +18,11 @@ source('P:/pCloud Sync/MSE_RS_test/kfdlm.R')
 
 
 
-    for( j in c("fitVobs","fitVobsVa","fitVobsVb","fitAll",
-                "dlmkf_nopr","dlmkf_pr_ars","dlmkf_pr_brs",
-                "dlmkf_pr_Vb0","dlmkf_pr_Va0","dlmkf_pr_Vab0"
+    for( j in c(
+                # "fitVobs","fitVobsVa","fitVobsVb","fitAll",
+                # "dlmkf_nopr","dlmkf_pr_ars","dlmkf_pr_brs",
+                # "dlmkf_pr_Vb0","dlmkf_pr_Va0","dlmkf_pr_Vab0",
+                "fixVobs"
                )) {
     
       switch(j,
@@ -28,6 +30,7 @@ source('P:/pCloud Sync/MSE_RS_test/kfdlm.R')
              "fitVobsVa"    = { s2_obs=0.6; s2_alpha=0.2; s2_beta=0.2; a0=2; b0=-1; hess=T },
              "fitVobsVb"    = { s2_obs=0.6; s2_alpha=0.2; s2_beta=0.2; a0=2; b0=-1; hess=T },
              "fitAll"       = { s2_obs=0.6; s2_alpha=0.2; s2_beta=0.2; a0=2; b0=-1; hess=T },
+             "fixVobs"      = { s2_obs=0.4; s2_alpha=0.2; s2_beta=0.2; a0=2; b0=-1; hess=T },
              "dlmkf_nopr"   = { s2_obs=0.6; s2_alpha=0.6; s2_beta=0.6; a0=2; b0=-1; hess=F  },
              "dlmkf_pr_ars" = { s2_obs=0.6; s2_alpha=0.2; s2_beta=0.2/4; a0=2; b0=-1; hess=F },
              "dlmkf_pr_brs" = { s2_obs=0.6; s2_alpha=0.2/4; s2_beta=0.2; a0=2; b0=-1; hess=F },
